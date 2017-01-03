@@ -8,8 +8,8 @@
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
 
-  if(argc != 4 && argc != 5) {
-    LOG(ERROR) << "Usage: " << argv[0] << " a b input_db [out_db]";
+  if(argc != 5 && argc != 6) {
+    LOG(ERROR) << "Usage: " << argv[0] << " a b input_db output_blob [out_db]";
     return 1;
   }
 
@@ -104,7 +104,20 @@ int main(int argc, char** argv) {
     "  return 1.0 / normalization_parameters[i * 2 + 0] * (y - normalization_parameters[i * 2 + 1]);" << std::endl <<
     "}" << std::endl;
 
-  if(argc == 4) {
+  // write normalization parameters as BlobProto
+  caffe::BlobProto normalization_parameters_blob;
+  caffe::BlobShape* blob_shape = normalization_parameters_blob.mutable_shape();
+  blob_shape->add_dim(float_data_size);
+  blob_shape->add_dim(2);
+  for(unsigned int i = 0; i < float_data_size; ++i) {
+    for(unsigned int j = 0; j < 2; ++j) {
+      normalization_parameters_blob.add_data(normalization_parameters[i*2 + j]);
+    }
+  }
+  LOG(INFO) << "Writing normalization blob to " << argv[4];
+  caffe::WriteProtoToBinaryFile(normalization_parameters_blob, argv[4]);
+
+  if(argc == 5) {
     // done
     return 0;
   }
@@ -114,7 +127,7 @@ int main(int argc, char** argv) {
   output_options.error_if_exists = true;
   output_options.create_if_missing = true;
   output_options.max_open_files = 100;
-  std::string out_dbname = std::string(argv[4]);
+  std::string out_dbname = std::string(argv[5]);
   auto out_db = open_leveldb(out_dbname, output_options);
   std::string serialized_datum;
   leveldb::WriteOptions write_options;

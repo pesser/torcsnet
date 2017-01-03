@@ -13,5 +13,12 @@ target_link_libraries(split ${Caffe_LIBRARIES})
 add_executable(normalize normalize.cpp)
 target_link_libraries(normalize ${Caffe_LIBRARIES})
 
+add_executable(shuffle shuffle.cpp)
+target_link_libraries(shuffle ${Caffe_LIBRARIES})
+
+add_executable(visualize_prediction visualize_prediction.cpp)
+target_link_libraries(visualize_prediction ${Caffe_LIBRARIES})
+
 configure_file(network_train.prototxt network_train.prototxt)
+configure_file(network_deploy.prototxt network_deploy.prototxt)
 configure_file(network_solver.prototxt network_solver.prototxt)

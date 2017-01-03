@@ -13,8 +13,8 @@ const float scale_sc = 100; // factor to multiply steering command with
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
 
-  if(argc != 4) {
-    LOG(ERROR) << "Usage: " << argv[0] << " input_db input_network input_weights";
+  if(argc != 5) {
+    LOG(ERROR) << "Usage: " << argv[0] << " input_db input_network input_weights normalization_param_blob";
     return 1;
   }
 
@@ -70,6 +70,9 @@ int main(int argc, char** argv) {
   // Data transformer
   auto transformation_param = network.layers()[0]->layer_param().transform_param();
   caffe::DataTransformer<float> transformer(transformation_param, caffe::TEST);
+  // Data normalizer
+  std::string normalization_fname(argv[4]);
+  LinearNormalizer<float> normalizer(normalization_fname);
 
   // iterate
   auto it = db->NewIterator(leveldb::ReadOptions());
@@ -86,6 +89,8 @@ int main(int argc, char** argv) {
     // predict current frame
     transformer.Transform(datum, input_blob);
     network.Forward();
+    normalizer.Denormalize(output_blob);
+
     // raw output data
     const float* output_data = output_blob->cpu_data();
     // visualize steering command

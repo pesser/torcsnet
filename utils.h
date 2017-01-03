@@ -61,3 +61,48 @@ void datum_to_ipl(const caffe::Datum& datum, IplImage* img)
     }
   }
 }
+
+
+// Apply linear transformation to (de-)normalize blobs with a single axis.
+// Initialized with filename of binary protobuf file containing a BlobProto
+// that has as many rows as the blob has elements and two columns containing
+// the slope and bias of the linear transformation to normalize the entry.
+// See normalize.cpp where such a normalization is calculated.
+template <class Dtype>
+class LinearNormalizer {
+  public:
+    LinearNormalizer(const std::string& normalization_blob_fname) {
+      caffe::BlobProto normalization_blob_proto;
+      ReadProtoFromBinaryFileOrDie(normalization_blob_fname, &normalization_blob_proto);
+      this->normalization_blob.FromProto(normalization_blob_proto);
+      CHECK(this->normalization_blob.num_axes() == 2) << "Normalization blob should have two axes.";
+      CHECK(this->normalization_blob.shape(1) == 2) << "Normalization blob should have two columns.";
+    }
+
+    // normalize blob in-place
+    void Normalize(caffe::Blob<Dtype>* blob) {
+      check_blob(blob);
+      Dtype* input = blob->mutable_cpu_data();
+      const Dtype* normalization_params = normalization_blob.cpu_data();
+      for(unsigned int i = 0; i < normalization_blob.shape(0); ++i) {
+        input[i] = normalization_params[i*2 + 0] * input[i] + normalization_params[i*2 + 1];
+      }
+    }
+
+    // denormalize blob in-place
+    void Denormalize(caffe::Blob<Dtype>* blob) {
+      check_blob(blob);
+      Dtype* input = blob->mutable_cpu_data();
+      const Dtype* normalization_params = normalization_blob.cpu_data();
+      for(unsigned int i = 0; i < normalization_blob.shape(0); ++i) {
+        input[i] = (input[i] - normalization_params[i*2 + 1]) / normalization_params[i*2 + 0];
+      }
+    }
+
+  protected:
+    void check_blob(const caffe::Blob<Dtype>* blob) {
+      CHECK(blob->count() == normalization_blob.shape(0)) << "Input blob must have as many elements as normalization blob has rows.";
+    }
+
+    caffe::Blob<Dtype> normalization_blob;
+};

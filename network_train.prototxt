@@ -3,6 +3,9 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
+  include {
+    phase: TRAIN
+  }
   data_param {
     source: "torcs_train_input"
     backend: LEVELDB
@@ -16,8 +19,40 @@ layer {
   name: "targets"
   type: "Data"
   top: "targets"
+  include {
+    phase: TRAIN
+  }
   data_param {
     source: "torcs_train_target"
+    backend: LEVELDB
+    batch_size: 128
+  }
+}
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  include {
+    phase: TEST
+  }
+  data_param {
+    source: "torcs_test_input"
+    backend: LEVELDB
+    batch_size: 128
+  }
+  transform_param {
+    mean_file: "torcs_train_mean.binaryproto"
+  }
+}
+layer {
+  name: "targets"
+  type: "Data"
+  top: "targets"
+  include {
+    phase: TEST
+  }
+  data_param {
+    source: "torcs_test_target"
     backend: LEVELDB
     batch_size: 128
   }

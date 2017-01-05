@@ -6,7 +6,7 @@
 
 const int ASCII_ESC = 27;
 const int n_outputs = 15;
-const float scale_sc = 100; // factor to multiply steering command with
+const float scale_sc = 300; // factor to multiply steering command with
 
 
 // Show frames in leveldb
@@ -77,6 +77,8 @@ int main(int argc, char** argv) {
   // iterate
   auto it = db->NewIterator(leveldb::ReadOptions());
   unsigned int count = 0;
+  unsigned int info_iter = 1000;
+  unsigned int wait_ms = 100;
   for(it->SeekToFirst(); it->Valid(); it->Next())
   {
     datum.ParseFromString(it->value().ToString());
@@ -95,7 +97,6 @@ int main(int argc, char** argv) {
     const float* output_data = output_blob->cpu_data();
     // visualize steering command
     float steering_command = output_data[n_outputs - 1];
-    // TODO denormalize
     cvRectangle(windowImg,
                 cvPoint(shape[2] / 2, shape[1]),
                 cvPoint(shape[2] / 2 - scale_sc * steering_command, shape[1] + box_height / 2),
@@ -105,8 +106,14 @@ int main(int argc, char** argv) {
     cvShowImage(dbname.c_str(), windowImg);
     
     count += 1;
-    auto key = cvWaitKey(20);
+    auto key = cvWaitKey(wait_ms);
     if(key == ASCII_ESC) break;
+    if(key == 'l') wait_ms = std::max((int)wait_ms - 10, 1);
+    if(key == 'h') wait_ms = wait_ms + 10;
+    if(key == 'k') for(int i = 0; i < 100; ++i) it->Next();
+    if(key == 'j') for(int i = 0; i < 100; ++i) it->Prev();
+
+    if(count % info_iter) std::cout << "Frame: " << it->key().ToString() << std::endl;
   }
   std::cout << "Played a total of " << count << " keys." << std::endl;
 

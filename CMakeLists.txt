@@ -22,6 +22,9 @@ target_link_libraries(visualize_prediction ${Caffe_LIBRARIES})
 add_executable(divide_traintest divide_traintest.cpp)
 target_link_libraries(divide_traintest ${Caffe_LIBRARIES})
 
+add_executable(drive_torcs drive_torcs.cpp)
+target_link_libraries(drive_torcs ${Caffe_LIBRARIES})
+
 configure_file(network_train.prototxt network_train.prototxt)
 configure_file(network_deploy.prototxt network_deploy.prototxt)
 configure_file(network_solver.prototxt network_solver.prototxt)

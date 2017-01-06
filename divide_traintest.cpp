@@ -11,16 +11,6 @@ void check_same_state(const std::vector<leveldb::Iterator*>& its) {
   }
 }
 
-// convert integer to key for leveldb
-std::string key_from_int(int i) {
-  const int width = 8;
-  CHECK_LE(i, (int)std::pow(10, width) - 1) <<
-    "Index is too large to be compatible with the configured key format. Increase width of key.";
-  std::stringstream ss;
-  ss << std::setw(width) << std::setfill('0') << i;
-  return ss.str();
-}
-
 
 // Divide dataset into trainset consisting of train_size datums and testset
 // consisting of the remaining entries

@@ -9,7 +9,18 @@
 
 #include <caffe/caffe.hpp>
 
-auto open_leveldb(const std::string& dbname, const leveldb::Options& options)
+
+leveldb::DB* open_leveldb_nofail(const std::string& dbname, const leveldb::Options& options)
+{
+  leveldb::DB* db;
+  LOG(INFO) << "Opening " << dbname;
+  auto status = leveldb::DB::Open(options, dbname, &db);
+  if(status.ok()) return db;
+  if(db != nullptr) delete db;
+  return nullptr;
+}
+
+leveldb::DB* open_leveldb(const std::string& dbname, const leveldb::Options& options)
 {
   leveldb::DB* db;
   LOG(INFO) << "Opening " << dbname;
@@ -17,6 +28,18 @@ auto open_leveldb(const std::string& dbname, const leveldb::Options& options)
   CHECK(status.ok()) << "Failed to open leveldb: " << dbname;
   return db;
 }
+
+
+// convert integer to key for leveldb
+std::string key_from_int(int i) {
+  const int width = 8;
+  CHECK_LE(i, (int)std::pow(10, width) - 1) <<
+    "Index is too large to be compatible with the configured key format. Increase width of key.";
+  std::stringstream ss;
+  ss << std::setw(width) << std::setfill('0') << i;
+  return ss.str();
+}
+
 
 // return (channels, height, width) of first image datum in leveldb
 std::vector<unsigned int> infer_shape(leveldb::DB* db)
